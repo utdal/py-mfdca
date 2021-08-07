@@ -1,0 +1,5 @@
+matplotlib
+numba
+numpy
+biopython
+scipy

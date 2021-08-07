@@ -1,0 +1,4 @@
+matplotlib
+numba
+numpy
+biopython
