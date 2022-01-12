@@ -10,7 +10,7 @@ class dca:
         elif stype == 'dna':
             self.symboldict = {keys:index for index,keys in enumerate('ACGTU-')}
         elif len(stype) > 0:
-            self.symboldict = {keys:index for index,keys in enumerate(type)}
+            self.symboldict = {keys:index for index,keys in enumerate(stype)}
         else:
             raise('Provide valid sequence alphabet')
         
