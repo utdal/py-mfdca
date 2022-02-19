@@ -86,13 +86,9 @@ def interface_contacts_allatoms(input_filename: str, first_chain: str, second_ch
     size = open(input_filename,"r")
     lines = len(size.readlines())
     # create output_filename, considering directories as inputs
-    if '/' in input_filename:
-        dir = input_filename.split('/')[0]
-        pdb_name = input_filename.split('/')[1].split('.')[0]
-        output_filename = dir + "/contactmap_calpha_"+pdb_name+"_"+first_chain+second_chain+"_"+str(angstrom_cutoff)
-    else:
-        pdb_name = input_filename.split('/')[1].split('.')[0]
-        output_filename = "contactmap_calpha_"+pdb_name+"_"+first_chain+second_chain+"_"+str(angstrom_cutoff)
+    input_dir = os.path.sep.join(input_filename.split(os.path.sep)[:-1])
+    pdb_name = input_filename.split(os.path.sep)[-1].split('.')[0]
+    output_filename = os.path.join(input_dir,"contactmap_calpha_"+pdb_name+"_"+first_chain+second_chain+"_"+str(angstrom_cutoff))
     n=0
     an1 = []
     an2 = []
@@ -152,13 +148,9 @@ def interface_contacts_calpha(input_filename: str, first_chain: str, second_chai
     size = open(input_filename,"r")
     lines = len(size.readlines())
     # create output_filename, considering directories as inputs
-    if '/' in input_filename:
-        dir = input_filename.split('/')[0]
-        pdb_name = input_filename.split('/')[1].split('.')[0]
-        output_filename = dir + "/contactmap_calpha_"+pdb_name+"_"+first_chain+second_chain+"_"+str(angstrom_cutoff)
-    else:
-        pdb_name = input_filename.split('/')[1].split('.')[0]
-        output_filename = "contactmap_calpha_"+pdb_name+"_"+first_chain+second_chain+"_"+str(angstrom_cutoff)
+    input_dir = os.path.sep.join(input_filename.split(os.path.sep)[:-1])
+    pdb_name = input_filename.split(os.path.sep)[-1].split('.')[0]
+    output_filename = os.path.join(input_dir,"contactmap_calpha_"+pdb_name+"_"+first_chain+second_chain+"_"+str(angstrom_cutoff))
     n=0
     r1 = []
     r2 = []
