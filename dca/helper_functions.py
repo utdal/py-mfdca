@@ -3,6 +3,7 @@ import textwrap
 from Bio import SeqIO as s
 import math
 import pylab
+import os 
 
 def clean_pfam(input_filename: str, output_filename: str):
     dont_write_newline = True
