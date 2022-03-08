@@ -1,5 +1,5 @@
 import numpy as np 
-from scipy.spatial.distance import squareform,pdist
+from scipy.spatial.distance import squareform,pdist,cdist
 from numba import jit,prange
 from Bio import SeqIO
 
@@ -67,9 +67,20 @@ def compute_DI_justcouplings(N,q,couplings):
 
 # functions for mfDCA
 
-def compute_Meff_W(sequences,theta): #sequence reweighting before counting
-    W = 1 / ( 1 + ( squareform(pdist(sequences,'hamm') < theta) ).sum(1))
-    return W, W.sum()
+def compute_W(sequences,theta,batch_size):
+    '''handles very large data so that it fits into memory'''
+    msa_len = sequences.shape[0]
+    seq_len = sequences.shape[1]
+    output_W = np.zeros(msa_len,dtype=np.float64)
+    for idx in range(0, msa_len, batch_size):
+        if idx+batch_size > msa_len:
+            computation = (cdist(sequences[idx:], sequences, 'hamm') < theta).sum(1)
+            output_W[idx:] = computation
+        else:
+            computation = ( (cdist(sequences[idx:idx+batch_size],sequences,'hamm') < theta).sum(1) )
+            output_W[idx:idx+batch_size] = computation
+    return 1 / output_W
+
 
 @jit(nopython=True)
 def compute_Pi(sequences, pseudocount, N, M, q, Meff, W): #count single site statistics
@@ -83,10 +94,10 @@ def compute_Pi(sequences, pseudocount, N, M, q, Meff, W): #count single site sta
 
     return Pi
 
-@jit(nopython=True)
+@jit(nopython=True,parallel=True)
 def compute_Pij(sequences, pseudocount, N, M, q, Meff, W, Pi): # count pairwise statistics
     Pij = np.zeros((N,N,q,q),dtype=np.float64)
-    for i in range(N-1):
+    for i in prange(N-1):
         for j in range(i+1,N):
             for l in range(M):
                 Pij[i,j,sequences[l,i],sequences[l,j]] = Pij[i,j,sequences[l,i],sequences[l,j]] + W[l]

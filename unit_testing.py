@@ -1,10 +1,10 @@
 import numpy as np 
-from dca.dca_functions import compute_Meff_W, compute_Pi, compute_Pij, add_pseudocount, computeC, invC_to_4D, Compute_Results, Compute_AverageLocalField, create_numerical_MSA, return_Hamiltonian, load_couplings, compute_DI_justcouplings
+from dca.dca_functions import compute_W, compute_Pi, compute_Pij, add_pseudocount, computeC, invC_to_4D, Compute_Results, Compute_AverageLocalField, create_numerical_MSA, return_Hamiltonian, load_couplings, compute_DI_justcouplings
 from scipy.io import loadmat
 from scipy.stats import spearmanr
 import unittest
 
-## Unit tests for loading non mfDCA function outputs
+# Unit tests for loading non mfDCA function outputs
 class test_NumericalMSA(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -40,7 +40,8 @@ class test_compute_Pi_Pij_pseudocount_DI(unittest.TestCase): #theta=0.2,pseudo=0
         # run mfDCA in its entirety
         alphabet = {keys:index for index,keys in enumerate('-ACDEFGHIKLMNPQRSTVWY')}
         self.sequences,_ = create_numerical_MSA('unit_testing/main_function/pdz_nodupes.fa',alphabet)
-        self.W,self.Meff = compute_Meff_W(self.sequences,0.2)
+        self.W = compute_W(self.sequences, 0.2, 50000)
+        self.Meff = self.W.sum()
         self.pi_calc = compute_Pi(self.sequences,0.5,82,self.sequences.shape[0],21,self.Meff,self.W)
         self.pij_calc = compute_Pij(self.sequences,0.5,82,self.sequences.shape[0],21,self.Meff,self.W,self.pi_calc)
         self.pi_pseudo,self.pij_pseudo = add_pseudocount(self.pi_calc,self.pij_calc,0,82,21)

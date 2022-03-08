@@ -1,7 +1,7 @@
 import numpy as np
 from itertools import combinations
 from Bio import SeqIO 
-from .dca_functions import compute_Meff_W, compute_Pi, compute_Pij, add_pseudocount, computeC, invC_to_4D, Compute_Results, Compute_AverageLocalField, create_numerical_MSA, return_Hamiltonian, load_couplings, compute_DI_justcouplings
+from .dca_functions import compute_W, compute_Pi, compute_Pij, add_pseudocount, computeC, invC_to_4D, Compute_Results, Compute_AverageLocalField, create_numerical_MSA, return_Hamiltonian, load_couplings, compute_DI_justcouplings
 
 class dca:
     def __init__(self, fasta, couplings='', localfields='', stype='protein'):
@@ -27,10 +27,11 @@ class dca:
         if len(couplings) > 0 and len(localfields) == 0:
             self.localfields = np.zeros((self.q,self.N)) # assumes you use a no-gauge solution
 
-    def mean_field(self,pseudocount_weight=0.5,theta = 0.2,beta=1):
+    def mean_field(self, pseudocount_weight=0.5, theta=0.2, beta=1, cdist_batch_size=50000):
         """captures a coupling matrix np.array((N,N,q,q)) and local fields np.array((N,q)) to self.couplings and self.localfields"""
         #compute m_a, then M_eff
-        W, self.Meff = compute_Meff_W(self.sequences,theta)
+        W = compute_W(self.sequences, theta=theta, batch_size=cdist_batch_size)
+        self.Meff = W.sum()
         #compute reweighted frequences
         Pi = compute_Pi(self.sequences, pseudocount_weight, self.N, self.M, self.q, self.Meff, W)
         Pij = compute_Pij(self.sequences, pseudocount_weight, self.N, self.M, self.q, self.Meff, W, Pi)
