@@ -5,6 +5,8 @@ Reasons for discrepencies:
 - Spearmans correlation of Top 1000 DI pairs is > 99.9% compared to MATLAB results, will not significantly differ from MATLAB results.
 - Spearmans correlation of all DI pairs is 98.5%.
 
+**Update March 8, 2022. Same results as below with new compute_W function.**
+
 
 ```shell
 (dca) unit_testing.py
