@@ -2,7 +2,9 @@
 
 ## mfDCA implementation, adapted from MATLAB version (http://dca.rice.edu/portal/dca/)
 
-Unit testing Readme and script details output differences from MATLAB script.
+[Direct Coupling Analysis](https://www.pnas.org/doi/10.1073/pnas.1111471108) was developed using MATLAB. This is a python port.
+
+Unit testing Readme and script details output differences from original MATLAB script.
 
 Runtime comparison:
 
