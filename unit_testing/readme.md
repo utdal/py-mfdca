@@ -1,3 +1,9 @@
+The data used in the DCA computation via the MATLAB script given a set of input sequences.
+
+The same input sequences are used as input for py-mfdca, and the methods are compared at various points in the computation.
+
+*****
+
 Reasons for discrepencies:
 
 - condition number on C matrix is high (~3000), so the inversion step is sensitive to numerical differences.
