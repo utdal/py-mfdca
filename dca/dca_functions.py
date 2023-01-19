@@ -137,7 +137,7 @@ def computeC(Pi,Pij,N,q): # produce connected correlation matrix
 
 def invC_to_4D(invC, N, q): # create 4D eij array from inverted C matrix
     reshaped_invC = np.zeros((N,N,q,q),dtype=np.float64)
-    for i in range(N-1):
+    for i in range(N):
         for j in range(N):
             reshaped_invC[i,j,:,:] = np.pad( invC[ i * (q-1) : (i+1) * (q-1), 
                                             j * (q-1) : (j) * (q-1) + (q - 1) ] , 
