@@ -77,9 +77,14 @@ class dca:
         if not save_sequence_info:
             self.sequences = None
 
-    def compute_Hamiltonian(self, sequences, N1=None):
+    def compute_Hamiltonian(self, sequences, interDomainCutoff=None):
         numerical_sequences, headers = create_numerical_MSA(sequences, self.symboldict)
         return (
-            return_Hamiltonian(numerical_sequences, self.couplings, self.localfields),
+            return_Hamiltonian(
+                numerical_sequences,
+                self.couplings,
+                self.localfields,
+                interDomainCutoff=interDomainCutoff,
+            ),
             headers,
         )
