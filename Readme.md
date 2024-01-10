@@ -31,5 +31,5 @@ protein_family.mean_field()
 protein_family.DI # contains DI scores for each pair
 protein_family.couplings # NxNxqxq matrix of couplings (eij)
 protein_family.localfields # Nxq matrix of localfields (h)
-protein_family.compute_Hamiltonians('sequence_file') # returns (Hamiltonians,sequence_headers) for input sequences
+protein_family.compute_Hamiltonian('sequence_file') # returns (Hamiltonians,sequence_headers) for input sequences
 ```
