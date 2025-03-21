@@ -88,3 +88,7 @@ class dca:
             ),
             headers,
         )
+    
+    def compute_EffAlphabet(self, sequences):
+        numerical_sequences, _ = create_numerical_MSA(sequences, self.symboldict)
+        return return_EffAlphabet(numerical_sequences, self.couplings, self.localfields)

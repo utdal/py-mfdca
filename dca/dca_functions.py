@@ -284,3 +284,28 @@ def return_Hamiltonian(
             )
 
     return -hamiltonians
+
+def softmax(x):
+    exp_x = np.exp(x - np.max(x))  # Stabilizing to prevent overflow
+    return exp_x / np.sum(exp_x)
+
+def entropy(x):
+    return -np.sum(x * np.log(x))
+
+def siteDist(siteIdx,numerical_sequence, couplings, localfields):
+    localH = 0
+    localH = localH - localfields[:, siteIdx ]
+    for j in range(L):
+        if j != siteIdx: 
+            localH = localH - couplings[ siteIdx , j , :,numerical_sequence[j] ]
+    return softmax(-localH)
+
+@jit(nopython=True)
+def return_EffAlphabet(numerical_sequences, couplings, localfields):
+    M = numerical_sequences.shape[0]
+    L = numerical_sequences.shape[1]
+    Alphabets = np.zeros((M,L),dtype=np.float64)
+    for l in range(M):
+        for i in range(L):
+            Alphabets[l,i] = entropy(siteDist(i,numerical_sequences[l], couplings, localfields))
+    return np.exp(Alphabets)

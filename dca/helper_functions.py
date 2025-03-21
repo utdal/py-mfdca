@@ -1,9 +1,12 @@
 import linecache
 import textwrap
 from Bio import SeqIO as s
+from Bio.PDB import PDBParser
+from Bio.PDB.Polypeptide import is_aa
 import math
 import pylab
-import os 
+import os
+import warnings
 
 def clean_pfam(input_filename: str, output_filename: str):
     dont_write_newline = True
@@ -264,3 +267,69 @@ def backmap_alignment(align: str) -> dict:
             dic[int(dn[i])]=int(pn[i])
     return dic
 
+def get_allatom_contacts( pdb_file: str, chain1_id: str, chain2_id: str, distance_cutoff: int) -> tuple:
+    warnings.filterwarnings("ignore")
+    # Create a PDB parser object
+    parser = PDBParser()
+
+    # Parse the PDB file
+    structure = parser.get_structure("protein", pdb_file)
+
+    # Get the specified chains
+    chain1 = structure[0][chain1_id]
+    chain2 = structure[0][chain2_id]
+
+    # Function to get atom coordinates from a residue
+    def get_atom_coords(residue):
+        atom_coords = []
+        for atom in residue:
+            if atom.is_disordered():
+                for position in atom:
+                    atom_coords.append(position.coord)
+            else:
+                atom_coords.append(atom.coord)
+        return np.array(atom_coords)
+        
+    # Get coordinates and residue IDs for both chains
+    coord_ids1 = [
+        (get_atom_coords(res), res.id[1]) for res in chain1 if is_aa(res)
+    ]
+    coord_ids2 = [
+        (get_atom_coords(res), res.id[1]) for res in chain2 if is_aa(res)
+    ]
+
+    if len(coord_ids1) == 0 or len(coord_ids2) == 0:
+        # no valid aa residues in the chain, so we skip
+        return ()
+
+    coords1, res_ids1 = zip(*coord_ids1)
+    coords2, res_ids2 = zip(*coord_ids2)
+
+    # Combine all atom coordinates for each chain
+    all_coords1 = np.vstack(coords1)
+    all_coords2 = np.vstack(coords2)
+
+    # Calculate distances between all atoms
+    distances = np.linalg.norm(all_coords1[:, np.newaxis] - all_coords2, axis=2)
+
+    # Find pairs of atoms within the cutoff distance
+    close_atom_pairs = np.argwhere(distances <= distance_cutoff)
+
+    # Map atom pairs to residue pairs
+    res_index1 = np.cumsum([len(c) for c in coords1])
+    res_index2 = np.cumsum([len(c) for c in coords2])
+
+    close_residue_pairs = set()
+    for i, j in close_atom_pairs:
+        res1 = np.searchsorted(res_index1, i, side="right")
+        res2 = np.searchsorted(res_index2, j, side="right")
+        close_residue_pairs.add((res_ids1[res1], res_ids2[res2]))
+
+    print(f"Finished {pdb_file} {chain1_id} {chain2_id}")
+    results = (
+        pdb_file,
+        chain1_id,
+        chain2_id,
+        np.array(list(close_residue_pairs)),
+    )
+    return results    
