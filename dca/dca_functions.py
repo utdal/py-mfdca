@@ -285,14 +285,18 @@ def return_Hamiltonian(
 
     return -hamiltonians
 
+@jit(nopython=True)
+def entropy(x):
+    return -np.sum(x * np.log(x))
+
+@jit(nopython=True)
 def softmax(x):
     exp_x = np.exp(x - np.max(x))  # Stabilizing to prevent overflow
     return exp_x / np.sum(exp_x)
 
-def entropy(x):
-    return -np.sum(x * np.log(x))
-
+@jit(nopython=True)
 def siteDist(siteIdx,numerical_sequence, couplings, localfields):
+    L = localfields.shape[1]
     localH = 0
     localH = localH - localfields[:, siteIdx ]
     for j in range(L):

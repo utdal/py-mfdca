@@ -7,6 +7,7 @@ import math
 import pylab
 import os
 import warnings
+import numpy as np
 
 def clean_pfam(input_filename: str, output_filename: str):
     dont_write_newline = True

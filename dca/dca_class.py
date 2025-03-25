@@ -12,6 +12,7 @@ from .dca_functions import (
     return_Hamiltonian,
     load_couplings,
     compute_DI_justcouplings,
+    return_EffAlphabet,
 )
 
 
