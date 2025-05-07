@@ -214,6 +214,7 @@ def interface_contacts_calpha(input_filename: str, first_chain: str, second_chai
 
 def backmap_alignment(align: str) -> dict:
     #get information from manual alignment file
+    linecache.clearcache()
     domain = linecache.getline(align, 1)
     protein_id = linecache.getline(align, 6)[:4]
 
