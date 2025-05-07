@@ -2,6 +2,7 @@ import linecache
 import textwrap
 from Bio import SeqIO as s
 from Bio.PDB import PDBParser
+from Bio.PDB import MMCIFParser
 from Bio.PDB.Polypeptide import is_aa
 import math
 import pylab
@@ -272,7 +273,14 @@ def backmap_alignment(align: str) -> dict:
 def get_allatom_contacts( pdb_file: str, chain1_id: str, chain2_id: str, distance_cutoff: int) -> tuple:
     warnings.filterwarnings("ignore")
     # Create a PDB parser object
-    parser = PDBParser()
+
+    suffix_struc = pdb_file.split(".")[-1]
+    if suffix_struc == "pdb":
+        parser = PDBParser()
+    elif suffix_struc == "cif":
+        parser = MMCIFParser()
+    else:
+        raise ValueError(f"Unsupported file format: {suffix_struc}. Only PDB and CIF formats are supported.")
 
     # Parse the PDB file
     structure = parser.get_structure("protein", pdb_file)
