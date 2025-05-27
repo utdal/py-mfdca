@@ -342,4 +342,4 @@ def get_allatom_contacts( pdb_file: str, chain1_id: str, chain2_id: str, distanc
         chain2_id,
         np.array(list(close_residue_pairs)),
     )
-    return results    
+    return np.array(list(close_residue_pairs))    
