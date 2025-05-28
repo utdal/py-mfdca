@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.spatial.distance import cdist
 from numba import jit, prange
 from Bio import SeqIO
 
@@ -75,18 +74,42 @@ def compute_DI_justcouplings(N, q, couplings):
 # functions for mfDCA
 
 
+@jit(nopython=True, parallel=True, cache=True)
+def fast_cdist_theta(
+    array_one: np.array, array_two: np.array, theta: float = 0.2
+) -> np.array:
+    """For our reweighting, we count the pairwise hamming distances between all sequences in MSA.
+    We use cdist to get these distances in a matrix, then use theta to check if any given sequence pair
+    is 80% identical, and give the pair a 1 if it is and a 0 if it isn't. This is expensive.
+    This function counts differences between two sequence pairs, and stops counting when we know that
+    the sequences are too different and assign the pair a 0."""
+    output_array = np.ones(shape=(len(array_one), len(array_two)), dtype=np.bool)
+    # number of differences you need to get counted as "different enough to matter"
+    max_diffs = round(theta * array_one.shape[1])
+    for idx_one in prange(len(array_one)):
+        for idx_two in prange(len(array_two)):
+            current_diffs = 0
+            for idx_seq in range(array_one.shape[1]):
+                if array_one[idx_one, idx_seq] != array_two[idx_two, idx_seq]:
+                    current_diffs += 1
+                if current_diffs > max_diffs:
+                    output_array[idx_one, idx_two] = False
+                    break
+
+    return output_array
+
+
 def compute_W(sequences, theta, batch_size):
     """handles very large data so that it fits into memory"""
     msa_len = sequences.shape[0]
-    seq_len = sequences.shape[1]
     output_W = np.zeros(msa_len, dtype=np.float64)
     for idx in range(0, msa_len, batch_size):
         if idx + batch_size > msa_len:
-            computation = (cdist(sequences[idx:], sequences, "hamm") < theta).sum(1)
+            computation = (fast_cdist_theta(sequences[idx:], sequences, theta)).sum(1)
             output_W[idx:] = computation
         else:
             computation = (
-                cdist(sequences[idx : idx + batch_size], sequences, "hamm") < theta
+                fast_cdist_theta(sequences[idx : idx + batch_size], sequences, theta)
             ).sum(1)
             output_W[idx : idx + batch_size] = computation
     return 1 / output_W
