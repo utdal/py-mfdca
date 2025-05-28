@@ -250,7 +250,7 @@ def Compute_AverageLocalField(Pairwisehfield, N, q):  # caluclate local fields (
     return hi
 
 
-@jit(nopython=True)
+@jit(nopython=True, parallel=True)
 def return_Hamiltonian(
     numerical_sequences, couplings, localfields, interDomainCutoff=None
 ):  # calculates Hamiltonian for input fasta
@@ -266,12 +266,12 @@ def return_Hamiltonian(
             (pairs[:, 0] < interDomainCutoff) & (pairs[:, 1] >= interDomainCutoff)
         ]
 
-    for seq in range(M):
+    for seq in prange(M):
         for i in range(L):
             hamiltonians[seq] = (
                 hamiltonians[seq] + localfields[numerical_sequences[seq, i], i]
             )
-    for seq in range(M):
+    for seq in prange(M):
         for pair in pairs:
             hamiltonians[seq] = (
                 hamiltonians[seq]
@@ -285,31 +285,37 @@ def return_Hamiltonian(
 
     return -hamiltonians
 
+
 @jit(nopython=True)
 def entropy(x):
     return -np.sum(x * np.log(x))
+
 
 @jit(nopython=True)
 def softmax(x):
     exp_x = np.exp(x - np.max(x))  # Stabilizing to prevent overflow
     return exp_x / np.sum(exp_x)
 
+
 @jit(nopython=True)
-def siteDist(siteIdx,numerical_sequence, couplings, localfields):
+def siteDist(siteIdx, numerical_sequence, couplings, localfields):
     L = localfields.shape[1]
     localH = 0
-    localH = localH - localfields[:, siteIdx ]
+    localH = localH - localfields[:, siteIdx]
     for j in range(L):
-        if j != siteIdx: 
-            localH = localH - couplings[ siteIdx , j , :,numerical_sequence[j] ]
+        if j != siteIdx:
+            localH = localH - couplings[siteIdx, j, :, numerical_sequence[j]]
     return softmax(-localH)
+
 
 @jit(nopython=True)
 def return_EffAlphabet(numerical_sequences, couplings, localfields):
     M = numerical_sequences.shape[0]
     L = numerical_sequences.shape[1]
-    Alphabets = np.zeros((M,L),dtype=np.float64)
+    Alphabets = np.zeros((M, L), dtype=np.float64)
     for l in range(M):
         for i in range(L):
-            Alphabets[l,i] = entropy(siteDist(i,numerical_sequences[l], couplings, localfields))
+            Alphabets[l, i] = entropy(
+                siteDist(i, numerical_sequences[l], couplings, localfields)
+            )
     return np.exp(Alphabets)
