@@ -6,21 +6,19 @@
 
 Unit testing Readme and script details output differences from original MATLAB script.
 
-Runtime comparison:
-
-| Sequence Length | # of sequences | MATLAB runtime (s) | Python runtime (s) | 
-| --- | --- | --- | --- |
-| 82 | 36,540 | 42.3 | 148.8 | 
-| 298 | 11,507 | 30.7 | 48.8 | 
-| 217 | 422 | 5.4 | 8.1 |
-| 79 | 31,575 | 26.1 | 92.7 |
-| 302 | 461 | 13.6 | 14.7 |
-
 Installation:
-When in directory with setup.py,
+
+Simplest is:
 ```bash
-pip install .
+pip install git+https://github.com/utdal/py-mfdca.git
 ```
+
+Or:
+```bash
+git clone https://github.com/utdal/py-mfdca.git
+pip install py-mfdca
+```
+Which will also download the unit testing.
 
 Example Usage: 
 
@@ -33,3 +31,16 @@ protein_family.couplings # NxNxqxq matrix of couplings (eij)
 protein_family.localfields # Nxq matrix of localfields (h)
 protein_family.compute_Hamiltonian('sequence_file') # returns (Hamiltonians,sequence_headers) for input sequences
 ```
+Runtimes, Random MSA Average of 2 (M1 Pro, 16GB RAM):
+
+| Sequence Length | # of sequences | Runtime (s) | 
+| --- | --- | --- |
+| 100 | 1,000 | 2.2 | 
+| 300 | 1,000  | 5.4 | 
+| 500 | 1,000 | 21 |
+| 100 | 10,000  | 0.7 |
+| 300 | 10,000  | 6.7 |
+| 500 | 10,000 | 24.1 |
+| 100 | 100,000  | 98.5 |
+| 300 | 100,000  | 266.8 |
+| 500 | 100,000 | 391 |
