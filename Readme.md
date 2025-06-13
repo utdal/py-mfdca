@@ -6,19 +6,33 @@
 
 Unit testing Readme and script details output differences from original MATLAB script.
 
-Installation:
+## Installation
 
-Simplest is:
+The simplest way to install is:
+
 ```bash
 pip install git+https://github.com/utdal/py-mfdca.git
 ```
 
-Or:
+Or clone the repository:
 ```bash
 git clone https://github.com/utdal/py-mfdca.git
-pip install py-mfdca
+pip install .
 ```
-Which will also download the unit testing.
+This installs all core functionality and unit tests.
+
+_Note for Windows users_:
+
+By default, the package includes Unix-specific tools using pyhmmer, which are not supported on Windows. These will be automatically excluded during installation on Windows.
+
+If you are on Linux, macOS, or WSL, no special action is needed.
+
+If you’re on Windows and wish to force-install Unix tools (e.g., using WSL), you can run:
+
+
+```bash
+pip install .[unix]
+```
 
 Example Usage: 
 
@@ -44,3 +58,14 @@ Runtimes, Random MSA Average of 2 (M1 Pro, 16GB RAM):
 | 100 | 100,000  | 98.5 |
 | 300 | 100,000  | 266.8 |
 | 500 | 100,000 | 391 |
+
+## Optional: HMMER Tools (Unix Only)
+
+This package includes a Unix-specific module `dca.hmm_tools` for sequence analysis using [pyhmmer](https://github.com/althonos/pyhmmer).
+
+This module is:
+- Enabled by default on Unix systems (Linux/macOS)
+- Disabled on Windows
+- Can be imported as `from dca import hmm_tools`
+
+Attempting to import or use this module on Windows will raise an `ImportError`.

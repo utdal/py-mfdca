@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dca"
-version = "1.1.0"
+version = "1.2.0"
 description = "A Python implementation of mean-field Direct Coupling Analysis, adapted from the dca.m script from http://dca.rice.edu/portal/dca/."
 authors = [
     { name = "Jonathan Martin", email = "jonathan.martin3@utdallas.edu" }
@@ -12,9 +12,12 @@ authors = [
 license = "MIT"
 readme = "README.md"
 keywords = ["DCA", "Machine Learning", "Potts", "Proteins"]
+requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent"
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS"
 ]
 dependencies = [
     "matplotlib",
@@ -22,19 +25,15 @@ dependencies = [
     "numpy",
     "biopython",
     "scipy",
+    "pyhmmer; sys_platform != 'win32'",
 ]
 
-[tool.setuptools.package-data]
-dca = ['dca/__init__.py',
-        'dca/dca_analysis.py',
-        'dca/dca_class.py',
-        'dca/dca_functions.py',
-        'dca/helper_functions.py',]
+[project.optional-dependencies]
+unix = ["pyhmmer"]
 
 [tool.setuptools.packages.find]
 where = ["."]  # list of folders that contain the packages (["."] by default)
-include = ["dca"]  # package names should match these glob patterns (["*"] by default)
-exclude = ["dca/__pycache_*"]  # exclude packages matching these glob patterns (empty by default)
+include = ["dca*"]  # package names should match these glob patterns (["*"] by default)
 namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
 
 [project.urls]
