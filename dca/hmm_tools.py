@@ -4,6 +4,10 @@ if sys.platform == "win32":
 
 # safe to import pyhmmer and do other Unix-specific work
 import pyhmmer
+from pathlib import Path
+from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 
 
 def MapSeq2hmmProfile(hmmFile, Sequence2Align, whichHit=1) -> dict:
@@ -88,3 +92,97 @@ def MapSeq2hmmProfile(hmmFile, Sequence2Align, whichHit=1) -> dict:
             mapping[hmm_pos] = target_pos
 
     return mapping
+
+def MapNuc2hmmProfile(hmmFile, NucSequence2Align,whichHit=1) -> dict:
+    """
+    Map a nucleotide sequence to an HMM profile via its translated protein sequence.
+
+    This function:
+      1. Translates a nucleotide FASTA to protein.
+      2. Aligns the protein to the HMM profile using pyhmmer.
+      3. Builds a mapping from HMM match states to nucleotide codons.
+      4. Writes aligned protein and nucleotide sequences to disk.
+
+    Parameters
+    ----------
+    hmmFile : str or Path
+        Path to the HMMER3 profile HMM file.
+    NucSequence2Align : str or Path
+        Path to the nucleotide FASTA file.
+    whichHit : int, optional
+        Which domain hit to use from the alignment (default: 1).
+
+    Returns
+    -------
+    alignment_dictionary : dict
+        Dictionary mapping 1-based HMM match state positions to 1-based codon positions in the nucleotide sequence.
+
+    Notes
+    -----
+    - Aligned sequences are saved as FASTA files with '.aligned.fasta' suffix.
+    - Requires pyhmmer and biopython.
+    """
+
+    if not isinstance(hmmFile, Path):
+        hmmFile = Path(hmmFile)
+    if not isinstance(NucSequence2Align, Path):
+        NucSequence2Align = Path(NucSequence2Align)
+
+    with open(NucSequence2Align, "r") as nt_handle:
+        nucleotide_record = SeqIO.read(nt_handle, "fasta")
+
+    # Convert nucleotide sequence to protein sequence
+    protein_seq = nucleotide_record.seq.translate()
+    protein_record = SeqRecord(
+        protein_seq,
+        id=nucleotide_record.id,
+        name=nucleotide_record.name,
+        description=nucleotide_record.description
+    )
+
+    TransProtFile = NucSequence2Align.with_suffix('.translated.fasta')
+    with open(TransProtFile, "w") as protein_handle:
+        SeqIO.write(protein_record, protein_handle, "fasta")
+
+    with open(hmmFile, "rb") as hf:
+        # Read all HMM profiles from the file
+        profL = list(pyhmmer.plan7.HMMFile(hf))[0].M
+    
+    alignment_dictionary = MapSeq2hmmProfile(hmmFile, TransProtFile, whichHit)
+
+    aligned_sequence = []
+    aligned_nucleotide_sequence = []
+    for resIdx in range(1, profL+1):
+        # Get the corresponding position in the target sequence
+        # If the position is not mapped, it will return None
+        target_position = alignment_dictionary.get(resIdx, None)
+        aligned_sequence.append(protein_record.seq[target_position-1] if target_position is not None else '-')
+        aligned_nucleotide_sequence.append(str(nucleotide_record.seq[3*(target_position-1):3*target_position]) if target_position is not None else '---')
+
+    aligned_sequence = ''.join(aligned_sequence)
+    aligned_nucleotide_sequence = ''.join(aligned_nucleotide_sequence)
+
+    aligned_protein_record = SeqRecord(
+        Seq(aligned_sequence),
+        id=protein_record.id,
+        name=protein_record.name,
+        description=protein_record.description
+    )
+
+    aligned_nucleotide_record = SeqRecord(
+        Seq(aligned_nucleotide_sequence),
+        id=nucleotide_record.id,
+        name=nucleotide_record.name,
+        description=nucleotide_record.description
+    )
+
+    # Save aligned sequences to files
+    aligned_protein_file = TransProtFile.with_suffix('.aligned.fasta')
+    with open(aligned_protein_file, "w") as protein_handle:
+        SeqIO.write(aligned_protein_record, protein_handle, "fasta")
+
+    aligned_nucleotide_file = NucSequence2Align.with_suffix('.aligned.fasta')
+    with open(aligned_nucleotide_file, "w") as nucleotide_handle:
+        SeqIO.write(aligned_nucleotide_record, nucleotide_handle, "fasta")
+
+    return alignment_dictionary
