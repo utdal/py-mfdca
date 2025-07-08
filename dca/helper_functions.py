@@ -374,7 +374,7 @@ def get_allatom_contacts(
     if suffix_struc == "pdb":
         parser = PDBParser()
     elif suffix_struc == "cif":
-        parser = MMCIFParser()
+        parser = MMCIFParser(auth_chains=False, auth_residues=False)
     else:
         raise ValueError(
             f"Unsupported file format: {suffix_struc}. Only PDB and CIF formats are supported."
