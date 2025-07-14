@@ -125,7 +125,7 @@ def plot_top_pairs(pdb_pairs, mapped_DI_pairs, figure_size):
     data_range = data_max - data_min
 
     # Find appropriate interval size rounded to the nearest 10
-    interval = np.ceil(data_range / 10 / 10) * 10
+    interval = np.ceil(data_range / 100) * 10
 
     # Create tick marks
     start = np.floor(data_min / interval) * interval
