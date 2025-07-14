@@ -43,7 +43,8 @@ def map_filter_DIpairs(alignment_dictionary, DI_pairs):
                     alignment_dictionary[pair[0]],
                     alignment_dictionary[pair[1]],
                 ]
-                newpair.append(pair[2])
+                if len(pair) == 3:  # DI pairs are included
+                    newpair.append(pair[2])
                 mapped_di.append(newpair)
 
     mapped_di = np.array(mapped_di)

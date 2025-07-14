@@ -1,6 +1,6 @@
 import numpy as np
-from numba import jit, prange
 from Bio import SeqIO
+from numba import jit, prange
 
 # numerical sequence converter
 
@@ -45,7 +45,9 @@ def load_couplings(N, q, eij_file):
     count = 0
     for i in range(N - 1):
         for j in range(i + 1, N):
-            formatted_couplings[i, j, :, :] = np.reshape(couplings[count], (q, q))
+            formatted_couplings[i, j, :, :] = np.reshape(
+                couplings[count], (q, q)
+            )
             formatted_couplings[j, i, :, :] = formatted_couplings[i, j, :, :]
             count += 1
     return formatted_couplings
@@ -74,7 +76,7 @@ def compute_DI_justcouplings(N, q, couplings):
 # functions for mfDCA
 
 
-@jit(nopython=True, parallel=True, cache=True)
+@jit(nopython=True, parallel=True, cache=True, nogil=True)
 def fast_cdist_theta(
     array_one: np.array, array_two: np.array, theta: float = 0.2
 ) -> np.array:
@@ -83,7 +85,9 @@ def fast_cdist_theta(
     is 80% identical, and give the pair a 1 if it is and a 0 if it isn't. This is expensive.
     This function counts differences between two sequence pairs, and stops counting when we know that
     the sequences are too different and assign the pair a 0."""
-    output_array = np.ones(shape=(len(array_one), len(array_two)), dtype=np.bool)
+    output_array = np.ones(
+        shape=(len(array_one), len(array_two)), dtype=np.bool
+    )
     # number of differences you need to get counted as "different enough to matter"
     max_diffs = round(theta * array_one.shape[1])
     for idx_one in prange(len(array_one)):
@@ -105,11 +109,15 @@ def compute_W(sequences, theta, batch_size):
     output_W = np.zeros(msa_len, dtype=np.float64)
     for idx in range(0, msa_len, batch_size):
         if idx + batch_size > msa_len:
-            computation = (fast_cdist_theta(sequences[idx:], sequences, theta)).sum(1)
+            computation = (
+                fast_cdist_theta(sequences[idx:], sequences, theta)
+            ).sum(1)
             output_W[idx:] = computation
         else:
             computation = (
-                fast_cdist_theta(sequences[idx : idx + batch_size], sequences, theta)
+                fast_cdist_theta(
+                    sequences[idx : idx + batch_size], sequences, theta
+                )
             ).sum(1)
             output_W[idx : idx + batch_size] = computation
     return 1 / output_W
@@ -159,7 +167,9 @@ def compute_Pij(
 def add_pseudocount(
     Pi, Pij, pseudocount_weight, N, q
 ):  # add pseudocount to counting matrices
-    Pij_pc = (1 - pseudocount_weight) * Pij + pseudocount_weight / q / q * np.ones(
+    Pij_pc = (
+        1 - pseudocount_weight
+    ) * Pij + pseudocount_weight / q / q * np.ones(
         (N, N, q, q), dtype=np.float64
     )
     Pi_pc = (1 - pseudocount_weight) * Pi + pseudocount_weight / q * np.ones(
@@ -206,7 +216,9 @@ def invC_to_4D(invC, N, q):  # create 4D eij array from inverted C matrix
 
 
 @jit(nopython=True)
-def Compute_Results(Pi, invC, N, q):  # calculate DI score for each pair of positions
+def Compute_Results(
+    Pi, invC, N, q
+):  # calculate DI score for each pair of positions
     Pairwisehfield = np.zeros((N * q, 2 * N), dtype=np.float64)
     DI_pairs = np.zeros((int(N * (N - 1) / 2), 3), dtype=np.float64)
     epsilon = 0.00004
@@ -255,11 +267,15 @@ def Compute_Results(Pi, invC, N, q):  # calculate DI score for each pair of posi
             mu2 = np.log(mu2 / mu2[-1])
             hihj = np.vstack((mu1, mu2)).T
             Pairwisehfield[(i) * q : (i * q) + q, 2 * j : 2 * j + 2] = hihj
-            Pairwisehfield[(j) * q : (j * q) + q, 2 * i : 2 * i + 2] = hihj[:, ::-1]
+            Pairwisehfield[(j) * q : (j * q) + q, 2 * i : 2 * i + 2] = hihj[
+                :, ::-1
+            ]
     return Pairwisehfield, DI_pairs
 
 
-def Compute_AverageLocalField(Pairwisehfield, N, q):  # caluclate local fields (h)
+def Compute_AverageLocalField(
+    Pairwisehfield, N, q
+):  # caluclate local fields (h)
     hi = np.zeros((q, N), dtype=np.float64)
     # average i->rest pairwise fields, returns 21*N matrix
     # 1st,3rd,5th...2*N-1 columns, excluding the column at pos i.
@@ -286,7 +302,8 @@ def return_Hamiltonian(
 
     if isinstance(interDomainCutoff, int):
         pairs = pairs[
-            (pairs[:, 0] < interDomainCutoff) & (pairs[:, 1] >= interDomainCutoff)
+            (pairs[:, 0] < interDomainCutoff)
+            & (pairs[:, 1] >= interDomainCutoff)
         ]
 
     for seq in prange(M):
