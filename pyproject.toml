@@ -7,9 +7,9 @@ name = "dca"
 version = "1.2.1"
 description = "A Python implementation of mean-field Direct Coupling Analysis, adapted from the dca.m script from http://dca.rice.edu/portal/dca/."
 authors = [
-    { name = "Jonathan Martin", email = "jonathan.martin3@utdallas.edu" }
+    { name = "Jonathan Martin", email = "jonathan.martin3@utdallas.edu" },
 ]
-license = "MIT"
+license = { text = "MIT" }
 readme = "README.md"
 keywords = ["DCA", "Machine Learning", "Potts", "Proteins"]
 requires-python = ">=3.8"
@@ -31,9 +31,11 @@ dependencies = [
 unix = ["pyhmmer"]
 
 [tool.setuptools.packages.find]
-where = ["."]  # list of folders that contain the packages (["."] by default)
-include = ["dca*"]  # package names should match these glob patterns (["*"] by default)
-namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
+where = ["."] # list of folders that contain the packages (["."] by default)
+include = [
+    "dca*",
+] # package names should match these glob patterns (["*"] by default)
+namespaces = false # to disable scanning PEP 420 namespaces (true by default)
 
 [project.urls]
 Homepage = "https://github.com/utdal/py-mfdca/"
