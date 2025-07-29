@@ -86,7 +86,7 @@ def fast_cdist_theta(
     This function counts differences between two sequence pairs, and stops counting when we know that
     the sequences are too different and assign the pair a 0."""
     output_array = np.ones(
-        shape=(len(array_one), len(array_two)), dtype=bool
+        shape=(len(array_one), len(array_two)), dtype=np.bool_
     )
     # number of differences you need to get counted as "different enough to matter"
     max_diffs = round(theta * array_one.shape[1])
