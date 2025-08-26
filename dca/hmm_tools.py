@@ -8,7 +8,7 @@ from pathlib import Path
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-
+import tempfile
 
 def MapSeq2hmmProfile(hmmFile, Sequence2Align, whichHit=1) -> dict:
     """
@@ -186,3 +186,55 @@ def MapNuc2hmmProfile(hmmFile, NucSequence2Align,whichHit=1) -> dict:
         SeqIO.write(aligned_nucleotide_record, nucleotide_handle, "fasta")
 
     return alignment_dictionary
+
+def MapMSA2hmmProfile(hmmFile, MSA2Align, whichHit=1):
+    # Ensure hmmFile and MSA2Align are Path objects
+    if not isinstance(hmmFile, Path):
+        hmmFile = Path(hmmFile)
+    if not isinstance(MSA2Align, Path):
+        MSA2Align = Path(MSA2Align)
+
+    with pyhmmer.plan7.HMMFile(hmmFile) as hmmfile:
+        hmm_profile = next(hmmfile)
+        hmm_length = hmm_profile.M
+        print(f"HMM profile length: {hmm_length}")
+
+    alignedRecords = []
+    with open(MSA2Align, "r") as handle:
+        msa_iterator = SeqIO.parse(handle, "fasta")
+        for record in msa_iterator:
+            # Create temp file and ensure it's properly closed before reading
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.fasta', delete=False) as temp_fasta:
+                temp_filename = Path(temp_fasta.name)
+                record.seq = Seq(str(record.seq).replace('-', ''))
+                SeqIO.write(record, temp_fasta, "fasta")
+            try:
+                # print(f"Processing temp file: {temp_filename}")
+                alignDict = MapSeq2hmmProfile(hmmFile, str(temp_filename), whichHit=whichHit)
+                # print(f"Alignment for {record.id}: {alignDict[record.id]}")
+            finally:
+                # Clean up the temporary file
+                temp_filename.unlink()
+            
+            aligned_sequence = []
+
+            for resIdx in range(1, hmm_length+1):
+                # Get the corresponding position in the target sequence
+                # If the position is not mapped, it will return None
+                target_position = alignDict.get(resIdx, None)
+                aligned_sequence.append(record.seq[target_position-1] if target_position is not None else '-')
+        
+            aligned_sequence = ''.join(aligned_sequence)
+
+            aligned_protein_record = SeqRecord(
+                Seq(aligned_sequence),
+                id=record.id,
+                name=record.name,
+                description=record.description)
+
+            alignedRecords.append(aligned_protein_record)
+
+    # Save aligned sequences to files
+    alignedMSA = MSA2Align.with_suffix('.aligned.fasta')
+    with open(alignedMSA, "w") as protein_handle:
+        SeqIO.write(alignedRecords, protein_handle, "fasta")    
