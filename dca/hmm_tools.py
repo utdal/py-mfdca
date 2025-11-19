@@ -188,6 +188,27 @@ def MapNuc2hmmProfile(hmmFile, NucSequence2Align,whichHit=1) -> dict:
     return alignment_dictionary
 
 def MapMSA2hmmProfile(hmmFile, MSA2Align, whichHit=1):
+    """
+    Aligns each sequence in a multiple sequence alignment (MSA) file to a given HMM profile and generates an aligned MSA in HMM profile coordinates.
+    Parameters
+    ----------
+    hmmFile : str or pathlib.Path
+        Path to the HMM profile file (in HMMER format).
+    MSA2Align : str or pathlib.Path
+        Path to the input MSA file (in FASTA format) whose sequences will be mapped to the HMM profile.
+    whichHit : int, optional
+        Specifies which alignment hit to use when mapping each sequence to the HMM profile (default is 1).
+    Returns
+    -------
+    None
+        The function writes the aligned sequences to a new FASTA file with the suffix '.aligned.fasta' in the same directory as the input MSA.
+    Notes
+    -----
+    - Each sequence in the input MSA is realigned to the HMM profile using a temporary FASTA file.
+    - The output aligned MSA will have the same number of columns as the HMM profile length, with gaps ('-') inserted where residues do not align.
+    - Requires `pyhmmer`, `Bio.SeqIO`, and `tempfile` modules.
+    """
+
     # Ensure hmmFile and MSA2Align are Path objects
     if not isinstance(hmmFile, Path):
         hmmFile = Path(hmmFile)
