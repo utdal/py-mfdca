@@ -400,7 +400,7 @@ def adabmDCA2pyMfDCA(path_params,L,q,symbolDict=None):
     """
     
     if symbolDict is None:
-        symbolDict = {symbol: idx for idx, symbol in enumerate(custom_alphabet)}
+        symbolDict = {symbol: idx for idx, symbol in enumerate("-ACDEFGHIKLMNPQRSTVWY")}
 
     bmLocalfields = np.zeros((q, L))
     bmCouplings = np.zeros((L,L, q, q))
