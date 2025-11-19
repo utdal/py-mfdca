@@ -140,6 +140,7 @@ class dca:
                 J_norm=jinf2 - np.mean(jinf2,0)
                 J_norm=J_norm - np.mean(J_norm,1,keepdims=True)
                 #Frobenius norm
+                F[i,j] = LA.norm(J_norm)
                 F[j,i]=F[i,j]
         avcoupl1 = np.sum(F, 1) / L
         sumj = np.sum(avcoupl1) / L
