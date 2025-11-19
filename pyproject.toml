@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dca"
-version = "1.3.0"
+version = "1.4.0"
 description = "A Python implementation of mean-field Direct Coupling Analysis, adapted from the dca.m script from http://dca.rice.edu/portal/dca/."
 authors = [
     { name = "Jonathan Martin", email = "jonathan.martin3@utdallas.edu" },

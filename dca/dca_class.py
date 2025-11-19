@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import linalg as LA
 from .dca_functions import (
     compute_W,
     compute_Pi,
@@ -90,6 +91,73 @@ class dca:
             headers,
         )
     
+    def Frobenius(self):
+        """
+        Compute pairwise coupling strengths using the (centered) Frobenius norm and apply
+        Average Product Correction (APC) to mitigate background / entropic effects.
+        For each pair of positions (i, j), the method:
+          1. Extracts the q x q coupling submatrix (excluding the final gauge/state if present).
+          2. Mean-centers the matrix first across columns, then across rows (double-centering).
+          3. Computes the Frobenius norm of the centered matrix as a raw coupling score.
+          4. Applies APC: F_apc(i, j) = F(i, j) - (mean_i * mean_j) / global_mean,
+             where mean_i is the average of row i over all partners, and global_mean is the
+             average of all row means.
+        Returns
+        -------
+        F_array : np.ndarray, shape (M, 3)
+            Array of raw Frobenius coupling scores.
+            Each row: [i, j, F_ij] with i < j, where
+            M = L * (L - 1) / 2 and L = self.N (sequence length).
+        Fapc_array : np.ndarray, shape (M, 3)
+            Array of APC-corrected coupling scores.
+            Each row: [i, j, F_apc_ij] with i < j.
+        Notes
+        -----
+        - self.couplings is expected to have shape (L, L, q, q) or compatible,
+          where q includes the gauge state; the last state (index -1) is excluded
+          before centering.
+        - Double-centering removes both row and column means, yielding a matrix
+          with zero mean across rows and columns before norm evaluation.
+        - APC reduces spurious correlations arising from positional conservation
+          rather than genuine coevolution.
+        References
+        ----------
+        - Frobenius norm: ||A||_F = sqrt(sum_{i,j} A_{ij}^2).
+        See Also
+        --------
+        LA.norm : NumPy linear algebra norm function used internally.
+        """
+
+        L = self.N
+        F=np.zeros((L,L))
+        Fapc=np.zeros((L, L))
+        q= self.q
+        for i in range (L):
+            for j in range(i+1,L):
+                #matrix  21x21 including also the gauge symbol
+                jinf2=np.zeros((q,q))
+                jinf2[:-1,:-1]= self.couplings[i,j,:-1,:-1]
+                J_norm=jinf2 - np.mean(jinf2,0)
+                J_norm=J_norm - np.mean(J_norm,1,keepdims=True)
+                #Frobenius norm
+                F[j,i]=F[i,j]
+        avcoupl1 = np.sum(F, 1) / L
+        sumj = np.sum(avcoupl1) / L
+        for i in range(L):
+            for j in range(i + 1, L):
+                Fapc[i, j] = F[i, j] - avcoupl1[i] * avcoupl1[j] / sumj
+                Fapc[j, i] = Fapc[i, j]
+        F_array = np.column_stack([ np.repeat(np.arange(L), L),
+            np.tile(np.arange(L), L),F.flatten()])
+        Fapc_array = np.column_stack([ np.repeat(np.arange(L), L),
+            np.tile(np.arange(L), L),Fapc.flatten()])
+
+        # Filter to keep only upper triangular (i < j)
+        F_array = F_array[F_array[:, 0] < F_array[:, 1]]
+        Fapc_array = Fapc_array[Fapc_array[:, 0] < Fapc_array[:, 1]]
+        
+        return F_array, Fapc_array
+
     def compute_EffAlphabet(self, sequences):
         numerical_sequences, _ = create_numerical_MSA(sequences, self.symboldict)
         return return_EffAlphabet(numerical_sequences, self.couplings, self.localfields)
