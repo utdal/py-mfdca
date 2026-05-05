@@ -2,97 +2,68 @@ import linecache
 from Bio.PDB import PDBParser
 from Bio.PDB import MMCIFParser
 from Bio.PDB.Polypeptide import is_aa
+from Bio import SeqIO
+from Bio.SeqRecord import SeqRecord
+from Bio.Seq import Seq
 import math
 import os
 import warnings
 import numpy as np
+import string
+from itertools import groupby
+from typing import Union
 
 
-def clean_pfam(input_filename: str, output_filename: str):
-    dont_write_newline = True
-    with open(input_filename, "r") as fd:
-        with open(output_filename, "w") as od:
-            for line in fd:
-                if ">" in line:
-                    if dont_write_newline:
-                        od.writelines(line)
-                        dont_write_newline = False
-                    else:
-                        od.writelines("\n")
-                        od.writelines(line)
-                else:
-                    newline = "".join(
-                        x for x in line.rstrip() if not x.islower() and x != "."
-                    )
-                    od.writelines(newline)
+def clean_pfam(input_filename: str, output_filename: str) -> None:
+    """Fasta files acquired by hmmsearch often have lowercase characters and periods, which we remove for our analysis.
+    This function does that, producing sequences with only gaps and uppercase letters.
+    """
+    # Define string translator
+    translator = {c: "" for c in string.ascii_lowercase}
+    translator["."] = ""
+    trans = str.maketrans(translator)
+
+    # define mapper function
+    def clean_record(record: SeqRecord) -> SeqRecord:
+        sequence = str(record.seq)
+        record.seq = Seq(sequence.translate(trans))
+        return record
+
+    clean_sequences = map(clean_record, SeqIO.parse(input_filename, "fasta"))
+
+    SeqIO.write(clean_sequences, output_filename, "fasta")
 
 
-def filter_pfam(filename: str, gaps: int, output: str):
-    linecache.clearcache()
-    data = filename
-    size = open(data, "r")
-    limit = int(gaps)
+def filter_pfam(filename: str, gap_cutoff: Union[float, int], output: str) -> None:
+    """Large contiguous gapped regions in sequences negatively affect our analysis and results.
+    This removes sequences which contain contiguous gaps whose length is >= the supplied percentage of the total length of the sequence.
+    Empirically, 0.2 (20%) is a good starting point."""
+    # Get max gap size based on provided gap_cutoff. If float, assume percentage and calculate it. If integer, assume max gap count provided.
+    if isinstance(gap_cutoff, float):
+        maxgap = round(gap_cutoff * len(next(SeqIO.parse(filename, "fasta")).seq))
+    elif isinstance(gap_cutoff, int):
+        maxgap = gap_cutoff
 
-    ###################################################################################
-    lim = ""
-    for k in range(0, limit):
-        lim += "-"
-    # print lim
-    ###################################################################################
-
-    i = 1
-
-    l = len(size.readlines())
-
-    output = open(output, "w")
-
-    ####################################################################################
-
-    nseq = 0
-    excluded = 0
-
-    ####################################################################################
-
-    while i < l:
-        sequence = ""
-        n = linecache.getline(data, i)
-        counter = 0
-        if n[0] == ">":
-            name = n
-            next = linecache.getline(data, i + 1)
-            try:
-                while next[0] != ">":
-                    sequence = sequence + next
-                    i += 1
-                    next = linecache.getline(data, i + 1)
-                nseq += 1
-            except IndexError:
-                pass
-        i += 1
-        x = ""
-        for j in range(0, len(sequence)):
-            if (
-                sequence[j] != "."
-                and sequence[j] != "\n"
-                and sequence[j].islower() == False
-            ):
-                x += sequence[j]
-        if len(x.split(lim)) == 1:
-            output.write(name + x + "\n")
+    # Find all gap substrings in a sequence, if max is > gaps, remove from set.
+    def max_chunksize(record: SeqRecord) -> int:
+        chunk_lengths = list(
+            len(list(chunk)) for char, chunk in groupby(str(record.seq)) if char == "-"
+        )
+        if len(chunk_lengths) == 0:
+            return 0
         else:
-            excluded += 1
+            return max(chunk_lengths)
 
-    output.close()
+    # parse file and keep only ones with <=gaps
+    original_set = list(SeqIO.parse(filename, "fasta"))
+    filtered_set = [record for record in original_set if max_chunksize(record) < maxgap]
+    SeqIO.write(filtered_set, output, "fasta")
 
-    print("Original number of sequences: " + str(nseq) + "\n")
-    percentage = float(excluded) / nseq * 100
-
+    # print statistics
+    percentage = (len(original_set) - len(filtered_set)) / len(original_set) * 100
+    print(f"Original number of sequences: {len(original_set)}\n")
     print(
-        "Number(%) of sequences excluded: "
-        + str(excluded)
-        + " ("
-        + str("{0:.2f}".format(percentage))
-        + "%)\n"
+        f"Number of sequences excluded: {len(original_set) - len(filtered_set)} ({round(percentage, 2)}%)"
     )
 
 
