@@ -34,7 +34,7 @@ def map_strings(alignment_sequence, pdb_sequence):
 def map_filter_DIpairs(alignment_dictionary, DI_pairs):
     mapped_di = []
     for pair in DI_pairs:
-        if pair[1] - pair[0] > 4:
+        if np.abs(pair[1] - pair[0]) > 4:
             if (
                 pair[0] in alignment_dictionary
                 and pair[1] in alignment_dictionary
