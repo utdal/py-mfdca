@@ -348,12 +348,12 @@ def siteDist(siteIdx, numerical_sequence, couplings, localfields):
     return softmax(-localH)
 
 
-@jit(nopython=True, parallel=True)
+@jit(nopython=True)
 def return_EffAlphabet(numerical_sequences, couplings, localfields):
     M = numerical_sequences.shape[0]
     L = numerical_sequences.shape[1]
     Alphabets = np.zeros((M, L), dtype=np.float64)
-    for l in prange(M):
+    for l in range(M):
         for i in range(L):
             Alphabets[l, i] = entropy(
                 siteDist(i, numerical_sequences[l], couplings, localfields)

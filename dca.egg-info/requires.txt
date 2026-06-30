@@ -1,0 +1,11 @@
+matplotlib
+numba
+numpy
+biopython
+scipy
+
+[:sys_platform != "win32"]
+pyhmmer
+
+[unix]
+pyhmmer
